@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "4317:4317" # OTLP gRPC receiver
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16686"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - OTLP_EXPORTER_ENDPOINT=http://jaeger:4317
+      - SERVICE_NAME=api-gateway
+      - INVENTORY_SERVICE_URL=http://inventory-service:8081
+      - ORDER_SERVICE_URL=http://order-service:8082
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8083
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  inventory-service:
+    build: ./inventory-service
+    environment:
+      - OTLP_EXPORTER_ENDPOINT=http://jaeger:4317
+      - SERVICE_NAME=inventory-service
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  order-service:
+    build: ./order-service
+    environment:
+      - OTLP_EXPORTER_ENDPOINT=http://jaeger:4317
+      - SERVICE_NAME=order-service
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  notification-service:
+    build: ./notification-service
+    environment:
+      - OTLP_EXPORTER_ENDPOINT=http://jaeger:4317
+      - SERVICE_NAME=notification-service
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

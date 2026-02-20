@@ -1,0 +1,12 @@
+{
+  "serviceLanguages": {
+    "api_gateway": "Node.js",
+    "order_service": "Python",
+    "inventory_service": "Node.js",
+    "notification_service": "Python"
+  },
+  "testData": {
+    "validOrderId": "7f9b8c2d-9e3f-4a0b-8c1d-2e3f4a5b6c7d",
+    "traceIdForValidOrder": "4bf92f3577b34da6a3ce929d0e0e4736"
+  }
+}
